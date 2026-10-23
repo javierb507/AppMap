@@ -1,14 +1,38 @@
 # 🌐 AppMap • Localhost Command Center & Port Radar
 
-> **The ultimate visual localhost dashboard for vibe coding.** Never wonder which dev server is running on what port again.
+> **Stop the localhost chaos. Find every running app instantly.**  
+> The ultimate visual command center designed for modern multi-project development and vibe coding — never lose track of a dev port again.
 
 [![Release v1.0.0](https://img.shields.io/badge/release-v1.0.0-3b82f6?style=flat-square)](https://github.com/javierb507/AppMap/releases/tag/v1.0.0)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-8b5cf6?style=flat-square)](#-platform-support)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-10b981?style=flat-square)](https://nodejs.org)
 [![License](https://img.shields.io/badge/license-ISC-64748b?style=flat-square)](LICENSE)
 
-Running automatically on fixed port **`http://localhost:10000`** (override with `PORT=xxxx`).  
-Works out of the box on **macOS**, **Linux** and **Windows** — zero native dependencies, only Node.js ≥ 18 and Express.
+---
+
+## 🤯 The Problem: Localhost Madness
+
+Ever had a development session that looked like this?
+- You have **6 terminal tabs** open running Vite, Next.js, FastAPI, Ollama, Docker, and Python scripts.
+- Vite silently moved from `5173` to `5174` because another instance was still running in a background tmux or terminal tab.
+- You can't remember if your microservice was on `:3001`, `:4310`, or `:8765`.
+- A zombie node process is holding a port, forcing you to type `lsof -i :3000 | awk '{print $2}' | xargs kill -9` for the 10th time today.
+- You have no idea which physical folder or git branch is powering the server on `:8080`.
+
+**This friction breaks your flow.**
+
+---
+
+## 🚀 The Solution: Total Visual Control
+
+**AppMap** turns your invisible localhost into a living, interactive radar galaxy:
+
+- 🔍 **Instant X-Ray Discovery**: Scans and identifies every active TCP listener, process name, PID, HTTP status, and response latency in sub-50ms without external agents.
+- 📁 **Repository & Git Context**: Automatically tracks which physical folder on disk (`cwd`) and Git branch (`main`, `feature/auth`) spawned each server.
+- 🔄 **Smart Port-Shift Tracking**: When an app jumps ports (e.g. `5173 → 5174`), AppMap recognizes its fingerprint and seamlessly moves your notes, tags, and favorites with it.
+- 🌟 **Star Your Daily Drivers**: Pin key apps as favorites with glowing celestial halos on the radar and dedicated 1-click filtering.
+- 🛠️ **1-Click Actions**: Open apps in browser, reveal project folders in Finder/Explorer, and gracefully terminate zombie processes with one click.
+- 🌍 **True Multiplatform**: Zero native dependencies — runs identically on **macOS**, **Linux**, and **Windows** on fixed port **`http://localhost:10000`**.
 
 ---
 
