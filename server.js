@@ -39,8 +39,36 @@ app.get('/api/health', (req, res) => {
     time: new Date().toISOString(),
     port: PORT,
     platform: platform.PLATFORM,
-    fileManager: platform.fileManagerName()
+    fileManager: platform.fileManagerName(),
+    primaryLanIp: platform.getPrimaryLanIp(),
+    networkIps: platform.getNetworkIps(),
+    settings: store.getSettings()
   });
+});
+
+// Settings endpoints
+app.get('/api/settings', (req, res) => {
+  res.json({
+    success: true,
+    settings: store.getSettings(),
+    primaryLanIp: platform.getPrimaryLanIp(),
+    networkIps: platform.getNetworkIps()
+  });
+});
+
+app.post('/api/settings', (req, res) => {
+  try {
+    const updated = store.updateSettings(req.body || {});
+    broadcastSse('settings_changed', updated);
+    res.json({
+      success: true,
+      settings: updated,
+      primaryLanIp: platform.getPrimaryLanIp(),
+      networkIps: platform.getNetworkIps()
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // Get all applications & current scan
@@ -51,6 +79,9 @@ app.get('/api/apps', async (req, res) => {
       success: true,
       port: PORT,
       timestamp: scanner.lastScanTime,
+      primaryLanIp: scanner.primaryLanIp || platform.getPrimaryLanIp(),
+      networkIps: scanner.networkIps || platform.getNetworkIps(),
+      settings: store.getSettings(),
       count: apps.length,
       apps
     });
@@ -63,10 +94,20 @@ app.get('/api/apps', async (req, res) => {
 app.post('/api/scan', async (req, res) => {
   try {
     const apps = await scanner.scan(PORT);
-    broadcastSse('apps_updated', { apps, count: apps.length, timestamp: scanner.lastScanTime });
+    const primaryLanIp = scanner.primaryLanIp || platform.getPrimaryLanIp();
+    const networkIps = scanner.networkIps || platform.getNetworkIps();
+    broadcastSse('apps_updated', {
+      apps,
+      count: apps.length,
+      timestamp: scanner.lastScanTime,
+      primaryLanIp,
+      networkIps
+    });
     res.json({
       success: true,
       timestamp: scanner.lastScanTime,
+      primaryLanIp,
+      networkIps,
       count: apps.length,
       apps
     });
@@ -304,7 +345,9 @@ setInterval(async () => {
       broadcastSse('apps_updated', {
         apps,
         count: apps.length,
-        timestamp: scanner.lastScanTime
+        timestamp: scanner.lastScanTime,
+        primaryLanIp: scanner.primaryLanIp || platform.getPrimaryLanIp(),
+        networkIps: scanner.networkIps || platform.getNetworkIps()
       });
     }
   } catch (err) {

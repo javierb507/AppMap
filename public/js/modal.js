@@ -141,6 +141,19 @@ class ModalManager {
     document.getElementById('techLatency').textContent = app.latencyMs ? `${app.latencyMs}ms` : 'N/A';
     document.getElementById('techStatus').textContent = app.status ? `${app.status} ${app.statusText || ''}` : (app.statusText || 'Offline');
     document.getElementById('techGit').textContent = app.git ? `${app.git.branch} (${app.git.repoName})` : 'Not in Git repo';
+    
+    // Network Binding & Scope
+    const hostEl = document.getElementById('techHost');
+    const scopeEl = document.getElementById('techScope');
+    const lanUrlEl = document.getElementById('techLanUrl');
+    const localUrlEl = document.getElementById('techLocalUrl');
+
+    const lanIp = app.primaryLanIp || window.appState?.primaryLanIp || '127.0.0.1';
+    if (hostEl) hostEl.textContent = app.bindingLabel || (app.isLoopbackOnly ? '127.0.0.1 (Local Only)' : '0.0.0.0 (All Interfaces)');
+    if (scopeEl) scopeEl.textContent = app.isNetworkExposed ? '🌐 LAN Accessible' : '🔒 Host Loopback Only';
+    if (lanUrlEl) lanUrlEl.textContent = app.isNetworkExposed ? `http://${lanIp}:${app.port}` : 'Not exposed to LAN (Loopback only)';
+    if (localUrlEl) localUrlEl.textContent = `http://localhost:${app.port}`;
+
     document.getElementById('techCwd').textContent = app.cwd || 'N/A';
     document.getElementById('techCmd').textContent = app.command || 'N/A';
 

@@ -31,7 +31,9 @@ class CardsRenderer {
   createCardHtml(app) {
     const isSelf = app.isSelf;
     const isFav = app.isFavorite;
-    const targetUrl = app.customUrl || `http://localhost:${app.port}`;
+    const isRemote = window.appState ? window.appState.isRemoteClient() : false;
+    const targetUrl = window.appState ? window.appState.getAppTargetUrl(app) : (app.customUrl || `http://localhost:${app.port}`);
+    const effectiveHost = window.appState ? window.appState.getEffectiveHost(app) : 'localhost';
 
     // Status styling
     let statusClass = 'offline';
@@ -77,6 +79,25 @@ class CardsRenderer {
       </span>
     ` : '';
 
+    // Network Scope Binding Badge (LAN vs Local)
+    const bindingBadgeHtml = app.isNetworkExposed ? `
+      <span class="binding-badge badge-lan" title="Bound to ${this.escapeHtml(app.bindingLabel || '0.0.0.0')}: Accessible from any device on your LAN">
+        🌐 LAN
+      </span>
+    ` : `
+      <span class="binding-badge badge-local" title="Bound to ${this.escapeHtml(app.bindingLabel || '127.0.0.1')}: Strictly local loopback on host machine">
+        🔒 Local
+      </span>
+    `;
+
+    // Warning banner if client is viewing remotely but app is loopback-only
+    const remoteWarningHtml = (app.isLoopbackOnly && isRemote) ? `
+      <div class="warning-remote-loopback" title="This application is bound only to 127.0.0.1 on the host server. To access it from your remote browser, bind it to 0.0.0.0 or establish an SSH tunnel.">
+        <span>⚠️</span>
+        <span>Host loopback only (127.0.0.1)</span>
+      </div>
+    ` : '';
+
     // Working directory chip
     const cwdHtml = app.cwd ? `
       <div class="meta-chip cwd-chip" title="Click to copy path: ${this.escapeHtml(app.cwd)}" data-copy="${this.escapeHtml(app.cwd)}">
@@ -108,15 +129,24 @@ class CardsRenderer {
       </div>
     ` : '';
 
+    // Button label
+    let openBtnLabel = 'Open Localhost';
+    if (app.isLoopbackOnly && isRemote) {
+      openBtnLabel = 'Open (Local Only)';
+    } else if (effectiveHost !== 'localhost' && effectiveHost !== '127.0.0.1') {
+      openBtnLabel = `Open ${effectiveHost}`;
+    }
+
     return `
       <div class="app-card ${isSelf ? 'self-card' : ''}" data-port="${app.port}" data-category="${app.category}">
         <!-- Header -->
         <div class="card-header">
           <div class="card-header-left">
-            <span class="port-pill" title="Click to copy localhost URL" data-copy-url="${targetUrl}">
+            <span class="port-pill" title="Click to copy URL: ${this.escapeHtml(targetUrl)}" data-copy-url="${targetUrl}">
               <span>:${app.port}</span>
               <svg class="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             </span>
+            ${bindingBadgeHtml}
             ${isSelf ? '<span class="brand-badge">📍 Hub</span>' : ''}
             ${portShiftHtml}
           </div>
@@ -152,12 +182,13 @@ class CardsRenderer {
           </div>
 
           ${tagsHtml}
+          ${remoteWarningHtml}
         </div>
 
         <!-- Actions -->
         <div class="card-actions">
-          <a href="${targetUrl}" target="_blank" class="btn-open-app" title="Launch ${targetUrl}">
-            <span>Open Localhost</span>
+          <a href="${targetUrl}" target="_blank" class="btn-open-app" title="Launch ${this.escapeHtml(targetUrl)}">
+            <span>${openBtnLabel}</span>
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           </a>
           <button class="btn-card-action btn-edit-meta" title="Inspect & Edit Details" data-edit-port="${app.port}">

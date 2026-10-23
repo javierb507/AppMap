@@ -11,6 +11,9 @@ class AppState {
     this.pollIntervalMs = 5000;
     this.eventSource = null;
     this.knownPorts = new Set();
+    this.primaryLanIp = null;
+    this.networkIps = [];
+    this.settings = { hostMode: 'auto', customHost: '' };
 
     this.init();
   }
@@ -23,10 +26,14 @@ class AppState {
     window.cards = new CardsRenderer('appsCardsContainer');
     window.table = new TableRenderer('matrixTableBody');
 
-    // Host platform info (Finder / Explorer / File Manager labels)
+    // Host platform info (Finder / Explorer / File Manager labels) and network settings
     try {
       const health = await fetch('/api/health').then(r => r.json());
       window.appPlatform = { platform: health.platform, fileManager: health.fileManager };
+      if (health.primaryLanIp) this.primaryLanIp = health.primaryLanIp;
+      if (health.networkIps) this.networkIps = health.networkIps;
+      if (health.settings) this.settings = { ...this.settings, ...health.settings };
+
       const tip = document.querySelector('.tip-text');
       if (tip && health.fileManager) {
         tip.textContent = `💡 Tip: Click any port badge to copy URL • Click folder to open in ${health.fileManager}`;
@@ -34,6 +41,9 @@ class AppState {
     } catch (_) {
       window.appPlatform = { platform: 'unknown', fileManager: 'file manager' };
     }
+
+    // Initialize Host Switcher dropdown
+    this.initHostSelector();
 
     // Initial Fetch
     await this.fetchApps();
@@ -45,11 +55,183 @@ class AppState {
     this.startPolling();
   }
 
+  initHostSelector() {
+    const btn = document.getElementById('btnHostSelector');
+    const panel = document.getElementById('hostMenuPanel');
+    const dropdown = document.getElementById('hostSelectorDropdown');
+    const customRow = document.getElementById('hostCustomInputRow');
+    const customInput = document.getElementById('hostCustomInput');
+    const btnSaveCustom = document.getElementById('btnSaveCustomHost');
+
+    if (!btn || !panel) return;
+
+    // Toggle dropdown
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      panel.classList.toggle('hidden');
+      if (!panel.classList.contains('hidden') && this.settings.hostMode === 'custom') {
+        customRow?.classList.remove('hidden');
+        customInput?.focus();
+      }
+    });
+
+    // Close on outside click or escape
+    document.addEventListener('click', (e) => {
+      if (dropdown && !dropdown.contains(e.target)) {
+        panel.classList.add('hidden');
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && panel && !panel.classList.contains('hidden')) {
+        panel.classList.add('hidden');
+      }
+    });
+
+    // Radio option changes
+    document.querySelectorAll('input[name="hostModeRadio"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        const mode = e.target.value;
+        if (mode === 'custom') {
+          customRow?.classList.remove('hidden');
+          if (customInput) {
+            customInput.value = this.settings.customHost || '';
+            customInput.focus();
+          }
+        } else {
+          customRow?.classList.add('hidden');
+          this.setHostMode(mode);
+          panel.classList.add('hidden');
+        }
+      });
+    });
+
+    // Save custom host
+    const saveCustom = () => {
+      const val = (customInput?.value || '').trim();
+      if (val) {
+        this.setHostMode('custom', val);
+        panel.classList.add('hidden');
+      } else {
+        window.ui?.showToast('Please enter a valid hostname or IP', 'danger');
+      }
+    };
+
+    btnSaveCustom?.addEventListener('click', saveCustom);
+    customInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') saveCustom();
+    });
+
+    this.updateHostSelectorUi();
+  }
+
+  updateHostSelectorUi() {
+    const label = document.getElementById('hostPillLabel');
+    const lanSub = document.getElementById('hostOptionLanSub');
+    const autoSub = document.getElementById('hostOptionAutoSub');
+    const customSub = document.getElementById('hostOptionCustomSub');
+    const customInput = document.getElementById('hostCustomInput');
+    const mode = this.settings?.hostMode || 'auto';
+
+    if (lanSub && this.primaryLanIp) {
+      lanSub.textContent = `${this.primaryLanIp} (Wi-Fi / Ethernet)`;
+    }
+
+    const effectiveAutoHost = this.isRemoteClient() ? window.location.hostname : (this.primaryLanIp || 'localhost');
+    if (autoSub) {
+      autoSub.textContent = `Uses ${effectiveAutoHost}`;
+    }
+
+    if (customSub && this.settings?.customHost) {
+      customSub.textContent = this.settings.customHost;
+    }
+
+    if (customInput && this.settings?.customHost) {
+      customInput.value = this.settings.customHost;
+    }
+
+    // Check matching radio
+    const activeRadio = document.querySelector(`input[name="hostModeRadio"][value="${mode}"]`);
+    if (activeRadio) activeRadio.checked = true;
+
+    // Update Pill Label
+    if (label) {
+      if (mode === 'auto') {
+        label.textContent = `Host: Auto (${effectiveAutoHost})`;
+      } else if (mode === 'lan') {
+        label.textContent = `Host: LAN (${this.primaryLanIp || '127.0.0.1'})`;
+      } else if (mode === 'localhost') {
+        label.textContent = `Host: Localhost`;
+      } else if (mode === 'custom') {
+        label.textContent = `Host: ${this.settings.customHost || 'Custom'}`;
+      }
+    }
+  }
+
+  isRemoteClient() {
+    const h = window.location.hostname;
+    return Boolean(h && h !== 'localhost' && h !== '127.0.0.1');
+  }
+
+  getEffectiveHost(app = {}) {
+    if (app.isLoopbackOnly) return 'localhost';
+
+    const mode = this.settings?.hostMode || 'auto';
+    if (mode === 'localhost') return 'localhost';
+    if (mode === 'lan') return this.primaryLanIp || 'localhost';
+    if (mode === 'custom') return this.settings?.customHost || this.primaryLanIp || 'localhost';
+
+    // 'auto' mode:
+    if (this.isRemoteClient()) return window.location.hostname;
+    return this.primaryLanIp || 'localhost';
+  }
+
+  getAppTargetUrl(app) {
+    if (!app) return '';
+    // If user provided a customUrl in metadata (and it's not the default localhost:port), honor it
+    if (app.customUrl && app.hasCustomMeta && !app.customUrl.startsWith(`http://localhost:${app.port}`)) {
+      return app.customUrl;
+    }
+
+    if (app.isLoopbackOnly) {
+      return `http://localhost:${app.port}`;
+    }
+
+    const host = this.getEffectiveHost(app);
+    return `http://${host}:${app.port}`;
+  }
+
+  async setHostMode(mode, customHost = null) {
+    const payload = { hostMode: mode };
+    if (customHost !== null) payload.customHost = customHost;
+
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success && data.settings) {
+        this.settings = { ...this.settings, ...data.settings };
+        this.updateHostSelectorUi();
+        this.applyFiltersAndRender();
+        window.ui?.showToast(`Target host set to ${mode.toUpperCase()} (${this.getEffectiveHost({ isNetworkExposed: true })})`, 'success');
+      }
+    } catch (err) {
+      console.error('Failed to update host settings:', err);
+      window.ui?.showToast('Failed to update host settings', 'danger');
+    }
+  }
+
   async fetchApps() {
     try {
       const res = await fetch('/api/apps');
       const data = await res.json();
       if (data.success && data.apps) {
+        if (data.primaryLanIp) this.primaryLanIp = data.primaryLanIp;
+        if (data.networkIps) this.networkIps = data.networkIps;
+        if (data.settings) this.settings = { ...this.settings, ...data.settings };
+        this.updateHostSelectorUi();
         this.setApps(data.apps, data.timestamp);
       }
     } catch (err) {
@@ -263,9 +445,21 @@ class AppState {
       this.eventSource.addEventListener('apps_updated', (e) => {
         try {
           const payload = JSON.parse(e.data);
+          if (payload.primaryLanIp) this.primaryLanIp = payload.primaryLanIp;
+          if (payload.networkIps) this.networkIps = payload.networkIps;
+          this.updateHostSelectorUi();
           if (payload.apps) {
             this.setApps(payload.apps, payload.timestamp);
           }
+        } catch (_) {}
+      });
+
+      this.eventSource.addEventListener('settings_changed', (e) => {
+        try {
+          const newSettings = JSON.parse(e.data);
+          this.settings = { ...this.settings, ...newSettings };
+          this.updateHostSelectorUi();
+          this.applyFiltersAndRender();
         } catch (_) {}
       });
 

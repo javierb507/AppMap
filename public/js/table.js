@@ -54,7 +54,7 @@ class TableRenderer {
     if (!this.tbody) return;
 
     if (!apps || apps.length === 0) {
-      this.tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding: 2.5rem; color: var(--text-dim);">No applications match current filters.</td></tr>`;
+      this.tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding: 2.5rem; color: var(--text-dim);">No applications match current filters.</td></tr>`;
       return;
     }
 
@@ -63,7 +63,7 @@ class TableRenderer {
     this.tbody.innerHTML = sorted.map(app => {
       const isSelf = app.isSelf;
       const isFav = app.isFavorite;
-      const targetUrl = app.customUrl || `http://localhost:${app.port}`;
+      const targetUrl = window.appState ? window.appState.getAppTargetUrl(app) : (app.customUrl || `http://localhost:${app.port}`);
 
       let statusBadge = `<span class="status-badge offline">Offline</span>`;
       if (app.isHttp) {
@@ -75,6 +75,17 @@ class TableRenderer {
       } else if (app.isRawTcp) {
         statusBadge = `<span class="status-badge raw-tcp">TCP</span>`;
       }
+
+      // Scope Binding Badge
+      const scopeBadge = app.isNetworkExposed ? `
+        <span class="binding-badge badge-lan" title="Bound to ${this.escapeHtml(app.bindingLabel || '0.0.0.0')}: Accessible from any device on your LAN">
+          🌐 LAN
+        </span>
+      ` : `
+        <span class="binding-badge badge-local" title="Bound to ${this.escapeHtml(app.bindingLabel || '127.0.0.1')}: Strictly local loopback on host machine">
+          🔒 Local
+        </span>
+      `;
 
       // Icon resolution
       let iconHtml = '';
@@ -104,6 +115,7 @@ class TableRenderer {
           </td>
           <td>${statusBadge}</td>
           <td class="td-port">:${app.port}${portShiftHtml}</td>
+          <td>${scopeBadge}</td>
           <td class="td-app" title="${this.escapeHtml(app.title)}">
             ${iconHtml}
             <span style="font-weight:700;">${this.escapeHtml(app.title)}</span>
@@ -120,7 +132,7 @@ class TableRenderer {
           </td>
           <td><span class="meta-chip" style="font-size:0.7rem;">${app.category.toUpperCase()}</span></td>
           <td class="td-actions">
-            <a href="${targetUrl}" target="_blank" class="btn-open-app" style="padding:0.25rem 0.5rem; font-size:0.75rem;">Open ↗</a>
+            <a href="${targetUrl}" target="_blank" class="btn-open-app" title="Launch ${this.escapeHtml(targetUrl)}" style="padding:0.25rem 0.5rem; font-size:0.75rem;">Open ↗</a>
             <button class="btn-card-action" style="padding:0.25rem 0.5rem;" data-table-edit="${app.port}" title="Edit metadata">✏️</button>
             ${!isSelf && app.pid ? `
               <button class="btn-card-action btn-kill" style="padding:0.25rem 0.5rem;" data-table-kill="${app.pid}" data-table-port="${app.port}" data-table-name="${this.escapeHtml(app.title)}" data-table-cwd="${this.escapeHtml(app.cwd || '')}" title="Kill Process">💀</button>

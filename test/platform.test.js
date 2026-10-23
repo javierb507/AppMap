@@ -51,6 +51,36 @@ test('isSystemPath flags root and home but not project folders', () => {
   assert.strictEqual(platform.isSystemPath(null), true);
 });
 
+test('isPrivateIpv4 correctly identifies RFC1918 private subnets', () => {
+  const { isPrivateIpv4 } = platform._internal;
+  assert.strictEqual(isPrivateIpv4('192.168.1.186'), true);
+  assert.strictEqual(isPrivateIpv4('10.0.0.1'), true);
+  assert.strictEqual(isPrivateIpv4('172.16.0.5'), true);
+  assert.strictEqual(isPrivateIpv4('172.31.255.255'), true);
+  assert.strictEqual(isPrivateIpv4('172.32.0.1'), false);
+  assert.strictEqual(isPrivateIpv4('8.8.8.8'), false);
+  assert.strictEqual(isPrivateIpv4('127.0.0.1'), false);
+  assert.strictEqual(isPrivateIpv4('invalid'), false);
+});
+
+test('getNetworkIps returns valid non-internal IPv4 interfaces', () => {
+  const ips = platform.getNetworkIps();
+  assert.ok(Array.isArray(ips));
+  for (const item of ips) {
+    assert.ok(item.name);
+    assert.ok(item.address);
+    assert.strictEqual(typeof item.isPrivate, 'boolean');
+    assert.strictEqual(typeof item.isVirtual, 'boolean');
+  }
+});
+
+test('getPrimaryLanIp returns a non-empty IP string', () => {
+  const primary = platform.getPrimaryLanIp();
+  assert.strictEqual(typeof primary, 'string');
+  assert.ok(primary.length > 0);
+  assert.ok(/^\d+\.\d+\.\d+\.\d+$/.test(primary));
+});
+
 test('listListeners detects a server we open ourselves', async () => {
   const net = require('net');
   const server = net.createServer();
@@ -68,3 +98,4 @@ test('listListeners detects a server we open ourselves', async () => {
     server.close();
   }
 });
+

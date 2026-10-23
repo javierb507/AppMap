@@ -549,7 +549,10 @@ class RadarGalaxy {
 
   showTooltip(node, isPinned = false) {
     const app = node.app;
-    const targetUrl = app.customUrl || `http://localhost:${app.port}`;
+    const isRemote = window.appState ? window.appState.isRemoteClient() : false;
+    const targetUrl = window.appState ? window.appState.getAppTargetUrl(app) : (app.customUrl || `http://localhost:${app.port}`);
+    const lanIp = app.primaryLanIp || window.appState?.primaryLanIp || '127.0.0.1';
+    const effectiveHost = window.appState ? window.appState.getEffectiveHost(app) : 'localhost';
 
     this.tooltip.style.left = `${node.x}px`;
     this.tooltip.style.top = `${node.y - 12}px`;
@@ -565,6 +568,12 @@ class RadarGalaxy {
       </span>
     ` : '';
 
+    const bindingBadge = app.isNetworkExposed ? `
+      <span class="binding-badge badge-lan" title="Bound to ${this.escapeHtml(app.bindingLabel || '0.0.0.0')}: Accessible over LAN">🌐 LAN</span>
+    ` : `
+      <span class="binding-badge badge-local" title="Bound to ${this.escapeHtml(app.bindingLabel || '127.0.0.1')}: Local loopback only">🔒 Local</span>
+    `;
+
     let iconHtml = '';
     if (app.customIcon) {
       if (app.customIcon.startsWith('http') || app.customIcon.startsWith('/') || app.customIcon.startsWith('data:')) {
@@ -579,10 +588,47 @@ class RadarGalaxy {
       iconHtml = `<img src="${src}" style="width:20px; height:20px; object-fit:contain; vertical-align:middle; margin-right:6px;" onerror="this.style.display='none';" alt="">`;
     }
 
+    // Network row with quick copy
+    let networkBoxHtml = '';
+    if (app.isNetworkExposed) {
+      const lanTarget = `http://${lanIp}:${app.port}`;
+      const localTarget = `http://localhost:${app.port}`;
+      networkBoxHtml = `
+        <div class="tooltip-network-row">
+          <div class="tooltip-network-item">
+            <span>🌐 LAN: <strong>${lanIp}:${app.port}</strong></span>
+            <button class="tooltip-copy-btn" onclick="navigator.clipboard.writeText('${lanTarget}'); window.ui?.showToast('Copied: ${lanTarget}', 'success'); event.stopPropagation();" title="Copy LAN URL">Copy</button>
+          </div>
+          <div class="tooltip-network-item">
+            <span>💻 Local: <strong>localhost:${app.port}</strong></span>
+            <button class="tooltip-copy-btn" onclick="navigator.clipboard.writeText('${localTarget}'); window.ui?.showToast('Copied: ${localTarget}', 'success'); event.stopPropagation();" title="Copy Localhost URL">Copy</button>
+          </div>
+        </div>
+      `;
+    } else {
+      networkBoxHtml = `
+        <div class="tooltip-network-row">
+          <div class="tooltip-network-item" style="color:#94a3b8;">
+            <span>🔒 Loopback Only: <strong>127.0.0.1:${app.port}</strong></span>
+            <button class="tooltip-copy-btn" onclick="navigator.clipboard.writeText('http://localhost:${app.port}'); window.ui?.showToast('Copied loopback URL', 'success'); event.stopPropagation();" title="Copy Loopback URL">Copy</button>
+          </div>
+          ${isRemote ? `<div style="font-size:0.68rem; color:#fbbf24; margin-top:2px;">⚠️ Bound to host loopback only. Not directly reachable across LAN.</div>` : ''}
+        </div>
+      `;
+    }
+
+    let openBtnText = '🚀 Open in Browser';
+    if (app.isLoopbackOnly && isRemote) {
+      openBtnText = '🔒 Open (Localhost Only)';
+    } else if (effectiveHost !== 'localhost' && effectiveHost !== '127.0.0.1') {
+      openBtnText = `🚀 Open on ${effectiveHost}`;
+    }
+
     this.tooltip.innerHTML = `
       <div class="tooltip-header">
         <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
           <span class="tooltip-port-badge">:${app.port}</span>
+          ${bindingBadge}
           <span class="status-badge ${statusClass}">
             <span class="status-dot"></span>
             <span>${statusText}</span>
@@ -604,9 +650,11 @@ class RadarGalaxy {
 
       ${app.cwd ? `<div class="tooltip-cwd" title="${app.cwd}">📂 ${this.escapeHtml(app.cwd)}</div>` : ''}
 
+      ${networkBoxHtml}
+
       <!-- Direct Prominent Open Button -->
       <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="tooltip-open-big" onclick="window.radar.openAppUrl(window.appState.getAppByPort(${app.port})); event.stopPropagation();">
-        <span>🚀 Open in Browser</span>
+        <span>${openBtnText}</span>
         <span>↗</span>
       </a>
 
@@ -624,7 +672,7 @@ class RadarGalaxy {
 
   openAppUrl(app) {
     if (!app) return;
-    const targetUrl = app.customUrl || `http://localhost:${app.port}`;
+    const targetUrl = window.appState ? window.appState.getAppTargetUrl(app) : (app.customUrl || `http://localhost:${app.port}`);
     
     // Open directly in browser tab
     window.open(targetUrl, '_blank');
@@ -636,7 +684,7 @@ class RadarGalaxy {
       body: JSON.stringify({ url: targetUrl })
     }).catch(() => {});
 
-    window.ui?.showToast(`Opening ${app.title} (:${app.port})`, 'success');
+    window.ui?.showToast(`Opening ${app.title} (${targetUrl})`, 'success');
   }
 
   unpin() {

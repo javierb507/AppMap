@@ -45,6 +45,55 @@
           <span class="status-dot pulsing"></span>
           <span class="status-label">Live Radar Active</span>
         </div>
+
+        <!-- Host & Network IP Selector Pill -->
+        <div class="host-selector-dropdown" id="hostSelectorDropdown">
+          <button class="host-pill-btn" id="btnHostSelector" title="Click to change target Host / IP for URLs and launch buttons">
+            <span class="host-pill-icon">🌐</span>
+            <span class="host-pill-label" id="hostPillLabel">Host: Auto</span>
+            <span class="host-pill-arrow">▾</span>
+          </button>
+          <div class="host-menu-panel hidden" id="hostMenuPanel">
+            <div class="host-menu-header">
+              <span>Target Host & Network URLs</span>
+              <span class="host-menu-hint">For LAN / Remote Browsing</span>
+            </div>
+            <div class="host-menu-options">
+              <label class="host-option" title="Automatically uses the browser hostname when browsing remotely, or primary LAN IP">
+                <input type="radio" name="hostModeRadio" value="auto" checked>
+                <div class="host-option-text">
+                  <div class="host-option-title"><strong>Auto Detect</strong> <span class="badge-tag">Recommended</span></div>
+                  <span class="host-option-sub" id="hostOptionAutoSub">Uses browser hostname or LAN IP</span>
+                </div>
+              </label>
+              <label class="host-option" title="Always uses your home/office network IP (e.g. 192.168.1.x)">
+                <input type="radio" name="hostModeRadio" value="lan">
+                <div class="host-option-text">
+                  <div class="host-option-title"><strong>Primary LAN IP</strong></div>
+                  <span class="host-option-sub" id="hostOptionLanSub">192.168.1.186 (Wi-Fi / Ethernet)</span>
+                </div>
+              </label>
+              <label class="host-option" title="Force localhost loopback URLs (127.0.0.1)">
+                <input type="radio" name="hostModeRadio" value="localhost">
+                <div class="host-option-text">
+                  <div class="host-option-title"><strong>Localhost Only</strong></div>
+                  <span class="host-option-sub">127.0.0.1 (Same device loopback)</span>
+                </div>
+              </label>
+              <label class="host-option" title="Specify a custom hostname, tailscale IP, or domain">
+                <input type="radio" name="hostModeRadio" value="custom">
+                <div class="host-option-text">
+                  <div class="host-option-title"><strong>Custom IP / Domain</strong></div>
+                  <span class="host-option-sub" id="hostOptionCustomSub">e.g. server.local, 192.168.1.200</span>
+                </div>
+              </label>
+            </div>
+            <div class="host-custom-input-row hidden" id="hostCustomInputRow">
+              <input type="text" id="hostCustomInput" placeholder="e.g. 192.168.1.200 or server.local" spellcheck="false" autocomplete="off">
+              <button type="button" id="btnSaveCustomHost" class="btn btn-primary btn-sm">Set</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Quick Metrics Ribbon -->
@@ -224,6 +273,7 @@
                 <th class="th-fav">★</th>
                 <th class="th-status sortable" data-sort="status">Status</th>
                 <th class="th-port sortable" data-sort="port">Port</th>
+                <th class="th-scope sortable" data-sort="bindingScope">Scope</th>
                 <th class="th-app sortable" data-sort="title">Application / Title</th>
                 <th class="th-framework sortable" data-sort="framework">Framework</th>
                 <th class="th-latency sortable" data-sort="latency">Latency</th>
@@ -354,7 +404,11 @@
               <div class="tech-item"><span class="tech-k">Latency:</span> <span class="tech-v" id="techLatency">-</span></div>
               <div class="tech-item"><span class="tech-k">HTTP Status:</span> <span class="tech-v" id="techStatus">-</span></div>
               <div class="tech-item"><span class="tech-k">Git Branch:</span> <span class="tech-v" id="techGit">-</span></div>
+              <div class="tech-item"><span class="tech-k">Binding Host:</span> <span class="tech-v code-font" id="techHost">-</span></div>
+              <div class="tech-item"><span class="tech-k">LAN Exposure:</span> <span class="tech-v" id="techScope">-</span></div>
             </div>
+            <div class="tech-item full-width"><span class="tech-k">LAN URL:</span> <span class="tech-v code-font" id="techLanUrl">-</span></div>
+            <div class="tech-item full-width"><span class="tech-k">Local URL:</span> <span class="tech-v code-font" id="techLocalUrl">-</span></div>
             <div class="tech-item full-width"><span class="tech-k">Working Dir:</span> <span class="tech-v code-font" id="techCwd">-</span></div>
             <div class="tech-item full-width"><span class="tech-k">Command Line:</span> <span class="tech-v code-font" id="techCmd">-</span></div>
           </div>
