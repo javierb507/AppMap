@@ -2,9 +2,43 @@
 
 > **The ultimate visual localhost dashboard for vibe coding.** Never wonder which dev server is running on what port again.
 
-Running automatically on fixed port **`http://localhost:10000`** (override with `PORT=xxxx`).
+[![Release v1.0.0](https://img.shields.io/badge/release-v1.0.0-3b82f6?style=flat-square)](https://github.com/javierb507/AppMap/releases/tag/v1.0.0)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-8b5cf6?style=flat-square)](#-platform-support)
+[![Node](https://img.shields.io/badge/node-%3E%3D18-10b981?style=flat-square)](https://nodejs.org)
+[![License](https://img.shields.io/badge/license-ISC-64748b?style=flat-square)](LICENSE)
 
-Works on **macOS**, **Linux** and **Windows** — zero native dependencies, only Node.js ≥ 18 and Express.
+Running automatically on fixed port **`http://localhost:10000`** (override with `PORT=xxxx`).  
+Works out of the box on **macOS**, **Linux** and **Windows** — zero native dependencies, only Node.js ≥ 18 and Express.
+
+---
+
+## 📸 Screenshots & Visual Showcase
+
+### 🌌 Radar Galaxy View
+*Real-time orbital canvas mapping local services by port bands, featuring rotating radar sweep, live latency pings, star halos for favorites, and laser targeting inspection.*
+
+![Radar Galaxy View](docs/images/radar-galaxy-view.png)
+
+---
+
+### ⭐ Developer Cards & Favorites Filter
+*Glassmorphic cards with responsive latency badges, framework chips, project paths, 1-click launch, and reactive star pinning with dedicated Favorites isolation.*
+
+![Favorites Filtered Cards View](docs/images/favorites-cards-view.png)
+
+---
+
+### 🎨 App Icon & Visual Identity Picker
+*Custom visual identity manager with 1-click emoji palette, custom image/SVG URLs, live icon preview, and automatic disk/web favicon detection.*
+
+![App Icon Picker Dialog](docs/images/edit-modal-icons.png)
+
+---
+
+### 📊 Matrix Inspector Table
+*High-density developer table with sortable columns, live status codes, millisecond latencies, working directories, active Git branches, and inline process actions.*
+
+![Matrix Table Inspector View](docs/images/matrix-table-view.png)
 
 ---
 
@@ -113,15 +147,19 @@ All OS-specific logic lives in [`lib/platform.js`](lib/platform.js). Each step d
 
 ```
 App-map/
-├── package.json          # Project metadata and start scripts
+├── package.json          # Project metadata and start scripts (v1.0.0)
 ├── server.js             # Express 5 server listening on port 10000 & SSE stream
 ├── app-map-data.json     # Local store (git-ignored): tags, nicknames, notes, favorites
+├── docs/
+│   └── images/           # High-resolution screenshots for GitHub & Gitea
 ├── lib/
-│   ├── platform.js       # Cross-platform layer (ports, processes, cwd, launchers)
+│   ├── platform.js       # Cross-platform layer (macOS, Linux, Windows)
 │   ├── scanner.js        # Port scanner, fingerprinting, git info, categorizer
-│   ├── prober.js         # HTTP/TCP latency prober, framework and metadata detector
-│   ├── store.js          # Persistent JSON store manager
+│   ├── prober.js         # HTTP/TCP latency prober, framework and favicon detector
+│   ├── store.js          # Persistent JSON store manager (port-shift & favorites)
 │   └── actions.js        # Process killer, open in browser / file manager
+├── test/
+│   └── platform.test.js  # Automated cross-platform test suite
 └── public/
     ├── index.html        # Main dashboard SPA
     ├── css/
@@ -129,10 +167,23 @@ App-map/
     │   ├── radar.css     # Orbital radar canvas and tooltip styles
     │   └── components.css# Cards grid, matrix table, dialog modals, toasts
     └── js/
-        ├── app.js        # State manager and SSE live listener
-        ├── radar.js      # Interactive HTML5 Canvas radar galaxy
-        ├── cards.js      # Developer cards grid renderer
+        ├── app.js        # State manager, reactive favorites, and SSE live listener
+        ├── radar.js      # Interactive HTML5 Canvas radar galaxy with star halos
+        ├── cards.js      # Developer cards grid renderer with port-shift badges
         ├── table.js      # Matrix table inspector renderer
-        ├── modal.js      # Edit metadata and process kill dialog controllers
+        ├── modal.js      # Edit metadata, custom emoji palette & process kill dialogs
         └── ui.js         # Search, category filters, keyboard shortcuts ('/'), toasts
 ```
+
+---
+
+## 🏷️ Release Notes (v1.0.0)
+
+**Initial Official Release** — The visual localhost command center for developers:
+- 🌌 **Radar Galaxy Canvas**: Orbital visualization of localhost services with live radar sweep and status halos.
+- 💻 **Full Cross-Platform Support**: Works seamlessly on **macOS**, **Linux** and **Windows** without native binary dependencies.
+- 🔄 **Port-Shift Detection**: Resilient application fingerprinting that preserves your notes, tags, custom icons, and favorite status when dev servers change ports.
+- ⭐ **Reactive Favorites System**: Instant star toggling with dedicated filter tab and golden radar halos.
+- 🎨 **Visual Identity & Icon Customization**: Auto-extraction of favicons and inline SVG data URIs, local disk asset serving (`/api/app-icon/:port`), plus an interactive 1-click emoji palette.
+- ⚡ **Real-Time Live SSE**: Zero-refresh instant synchronization across multiple browser windows.
+- 🛡️ **Graceful & Force Process Termination**: Stop stuck dev servers directly from the dashboard.
