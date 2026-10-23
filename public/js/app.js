@@ -34,6 +34,20 @@ class AppState {
       if (health.networkIps) this.networkIps = health.networkIps;
       if (health.settings) this.settings = { ...this.settings, ...health.settings };
 
+      if (health.version) {
+        const headerBadge = document.getElementById('headerVersionBadge');
+        if (headerBadge) {
+          headerBadge.textContent = `v${health.version}`;
+          headerBadge.title = `AppMap v${health.version} • Commit ${health.commitHash || ''} (${health.commitDate || ''})`;
+        }
+        const footerTag = document.getElementById('footerVersionTag');
+        if (footerTag) {
+          const dateStr = health.commitDate ? ` • ${health.commitDate}` : '';
+          footerTag.textContent = `v${health.version}${dateStr}`;
+          footerTag.title = `AppMap v${health.version} • Commit ${health.commitHash || ''} on ${health.commitDate || 'N/A'}`;
+        }
+      }
+
       const tip = document.querySelector('.tip-text');
       if (tip && health.fileManager) {
         tip.textContent = `💡 Tip: Click any port badge to copy URL • Click folder to open in ${health.fileManager}`;

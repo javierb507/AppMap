@@ -28,12 +28,33 @@ function broadcastSse(eventType, data) {
   }
 }
 
+const pkg = require('./package.json');
+const { execFileSync } = require('child_process');
+
+function getVersionInfo() {
+  let commitHash = 'unknown';
+  let commitDate = '';
+  try {
+    commitHash = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 1500 }).trim();
+    commitDate = execFileSync('git', ['log', '-1', '--format=%cd', '--date=format:%Y-%m-%d'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 1500 }).trim();
+  } catch (_) {
+    commitDate = new Date().toISOString().split('T')[0];
+  }
+  return {
+    version: pkg.version,
+    commitHash,
+    commitDate: commitDate || new Date().toISOString().split('T')[0],
+    versionLabel: `v${pkg.version} (${commitDate || 'latest'})`
+  };
+}
+
 // ----------------------------------------------------
 // API ROUTES
 // ----------------------------------------------------
 
 // Health check
 app.get('/api/health', (req, res) => {
+  const versionInfo = getVersionInfo();
   res.json({
     status: 'ok',
     time: new Date().toISOString(),
@@ -42,7 +63,19 @@ app.get('/api/health', (req, res) => {
     fileManager: platform.fileManagerName(),
     primaryLanIp: platform.getPrimaryLanIp(),
     networkIps: platform.getNetworkIps(),
-    settings: store.getSettings()
+    settings: store.getSettings(),
+    version: versionInfo.version,
+    commitHash: versionInfo.commitHash,
+    commitDate: versionInfo.commitDate,
+    versionLabel: versionInfo.versionLabel
+  });
+});
+
+// App Version info endpoint
+app.get('/api/version', (req, res) => {
+  res.json({
+    success: true,
+    ...getVersionInfo()
   });
 });
 

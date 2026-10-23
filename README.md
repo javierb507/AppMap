@@ -3,7 +3,7 @@
 > **Stop the localhost chaos. Find every running app instantly.**  
 > The ultimate visual command center designed for modern multi-project development and vibe coding — never lose track of a dev port again.
 
-[![Release v1.0.0](https://img.shields.io/badge/release-v1.0.0-3b82f6?style=flat-square)](https://github.com/javierb507/AppMap/releases/tag/v1.0.0)
+[![Release v1.0.1](https://img.shields.io/badge/release-v1.0.1-3b82f6?style=flat-square)](https://github.com/javierb507/AppMap/releases/tag/v1.0.1)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-8b5cf6?style=flat-square)](#-platform-support)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-10b981?style=flat-square)](https://nodejs.org)
 [![License](https://img.shields.io/badge/license-ISC-64748b?style=flat-square)](LICENSE)

@@ -97,6 +97,19 @@ body.light-theme .brand-badge {
   -webkit-text-fill-color: #0284c7;
 }
 
+body.light-theme .app-version-badge {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #059669;
+  -webkit-text-fill-color: #059669;
+}
+
+body.light-theme .footer-version-tag {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #64748b;
+}
+
 body.light-theme .metric-card {
   background: #ffffff;
   border-color: rgba(15, 23, 42, 0.08);
@@ -400,6 +413,21 @@ html, body {
   border: 1px solid rgba(0, 242, 254, 0.35);
   color: var(--neon-cyan);
   -webkit-text-fill-color: var(--neon-cyan);
+}
+
+.app-version-badge {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.12rem 0.45rem;
+  border-radius: var(--radius-sm);
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: var(--neon-emerald);
+  -webkit-text-fill-color: var(--neon-emerald);
+  cursor: help;
+  display: inline-flex;
+  align-items: center;
 }
 
 .brand-subtitle {
@@ -851,6 +879,21 @@ html, body {
   padding: 0.2rem 0.55rem;
   border-radius: var(--radius-sm);
   color: var(--neon-cyan);
+}
+
+.footer-version-tag {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  padding: 0.18rem 0.5rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  margin-left: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
 }
 
 .last-scanned {
