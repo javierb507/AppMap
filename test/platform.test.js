@@ -20,8 +20,8 @@ test('splitHostPort handles IPv4, IPv6, wildcard and interface scopes', () => {
 test('parseLsofListeners parses lsof LISTEN rows', () => {
   const raw = [
     'COMMAND   PID USER   FD   TYPE DEVICE SIZE/OFF NODE NAME',
-    'node    40972 javi   23u  IPv6 0xabc      0t0  TCP [::1]:5173 (LISTEN)',
-    'Google\\x20 1234 javi   23u  IPv4 0xabc      0t0  TCP 127.0.0.1:9222 (LISTEN)'
+    'node    40972 dev    23u  IPv6 0xabc      0t0  TCP [::1]:5173 (LISTEN)',
+    'Google\\x20 1234 dev    23u  IPv4 0xabc      0t0  TCP 127.0.0.1:9222 (LISTEN)'
   ].join('\n');
   const rows = parseLsofListeners(raw);
   assert.strictEqual(rows.length, 2);
