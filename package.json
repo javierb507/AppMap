@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "push": "git push origin main"
   },
   "keywords": ["localhost", "ports", "dashboard", "dev-tools"],
   "author": "javierb507",
