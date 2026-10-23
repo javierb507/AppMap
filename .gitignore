@@ -1,0 +1,10 @@
+node_modules/
+npm-debug.log*
+
+# Personal local data (nicknames, notes, credentials, favorites)
+app-map-data.json
+
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

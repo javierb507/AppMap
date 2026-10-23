@@ -1,0 +1,6 @@
+# Normalize line endings so Windows checkouts don't break scripts
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.png binary
+*.ico binary

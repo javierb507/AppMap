@@ -1,0 +1,26 @@
+{
+  "name": "app-map",
+  "version": "1.1.0",
+  "description": "Localhost command center & port radar for macOS, Linux and Windows",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test"
+  },
+  "keywords": ["localhost", "ports", "dashboard", "dev-tools"],
+  "author": "javierb507",
+  "license": "ISC",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
+  "os": ["darwin", "linux", "win32"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/javierb507/AppMap.git"
+  },
+  "dependencies": {
+    "express": "^5.3.0"
+  }
+}

@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AppMap • Localhost Dev Radar & Port Galaxy</title>
+  <meta name="description" content="Visual localhost radar and directory for vibe coders. Track all running ports, frameworks, PIDs, and repos.">
+  
+  <!-- Modern Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/radar.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2244%22 fill=%22%23080b11%22 stroke=%22%2300f2fe%22 stroke-width=%228%22/><circle cx=%2250%22 cy=%2250%22 r=%2216%22 fill=%22%2300f2fe%22/><path d=%22M50 6 L50 94 M6 50 L94 50%22 stroke=%22%2300f2fe%22 stroke-width=%224%22 stroke-opacity=%220.4%22/></svg>">
+</head>
+<body class="dark-theme">
+  <!-- Dynamic Ambient Background Glows -->
+  <div class="ambient-glow glow-cyan"></div>
+  <div class="ambient-glow glow-purple"></div>
+  <div class="ambient-glow glow-amber"></div>
+
+  <!-- App Wrapper -->
+  <div id="app" class="app-container">
+    
+    <!-- Top Navigation & Command Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="brand-logo" id="brandLogo">
+          <div class="radar-beacon">
+            <span class="beacon-core"></span>
+            <span class="beacon-ring ring-1"></span>
+            <span class="beacon-ring ring-2"></span>
+          </div>
+          <div class="brand-text">
+            <h1 class="brand-title">AppMap <span class="brand-badge">:10000</span></h1>
+            <p class="brand-subtitle">Localhost Command Center & Port Radar</p>
+          </div>
+        </div>
+
+        <div class="connection-status" id="connectionStatus" title="Real-time Server-Sent Events connection">
+          <span class="status-dot pulsing"></span>
+          <span class="status-label">Live Radar Active</span>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Ribbon -->
+      <div class="header-metrics">
+        <div class="metric-card" id="metricTotal">
+          <span class="metric-icon">📡</span>
+          <div class="metric-info">
+            <span class="metric-val" id="valTotalPorts">0</span>
+            <span class="metric-tag">Active Ports</span>
+          </div>
+        </div>
+        <div class="metric-card" id="metricWeb">
+          <span class="metric-icon">⚡</span>
+          <div class="metric-info">
+            <span class="metric-val" id="valWebApps">0</span>
+            <span class="metric-tag">Web Devs</span>
+          </div>
+        </div>
+        <div class="metric-card" id="metricApi">
+          <span class="metric-icon">🚀</span>
+          <div class="metric-info">
+            <span class="metric-val" id="valApis">0</span>
+            <span class="metric-tag">APIs & Backends</span>
+          </div>
+        </div>
+        <div class="metric-card" id="metricAi">
+          <span class="metric-icon">🦙</span>
+          <div class="metric-info">
+            <span class="metric-val" id="valAi">0</span>
+            <span class="metric-tag">AI & Models</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Controls -->
+      <div class="header-actions">
+        <button id="themeToggleBtn" class="btn btn-secondary btn-theme-toggle" title="Toggle Light / Dark mode">
+          <span id="themeToggleIcon">☀️</span>
+          <span id="themeToggleLabel">Light Mode</span>
+        </button>
+        <button id="btnManualAdd" class="btn btn-primary" title="Add manual port or remote tunnel">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          <span>Add Custom</span>
+        </button>
+        <button id="btnScanNow" class="btn btn-secondary" title="Force immediate rescan">
+          <svg class="icon spin-icon" id="scanSpinIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          <span id="scanBtnText">Rescan</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Global Control Bar: Search, Category Filters, View Switcher -->
+    <section class="control-bar">
+      <!-- Scope Filter: Focused Dev Apps vs Technical All Ports -->
+      <div class="scope-toggle" id="scopeToggle">
+        <button class="scope-btn active" data-scope="apps" title="Main View: Only real web applications, APIs, and AI models">
+          <span>🚀 Dev Apps</span>
+          <span class="scope-badge" id="scopeAppsCount">0</span>
+        </button>
+        <button class="scope-btn" data-scope="all" title="Technical View: All active listening ports on the operating system">
+          <span>⚙️ All Open Ports</span>
+          <span class="scope-badge" id="scopeAllCount">0</span>
+        </button>
+      </div>
+
+      <!-- Search Input -->
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="searchInput" placeholder="Search app name, port, framework, path, PID... (Press '/' to focus)" autocomplete="off" spellcheck="false">
+        <button id="clearSearchBtn" class="clear-search hidden" title="Clear search">&times;</button>
+        <kbd class="kbd-shortcut">/</kbd>
+      </div>
+
+      <!-- Category Tabs Filter -->
+      <div class="category-tabs" id="categoryTabs">
+        <button class="tab-btn active" data-category="all">
+          <span>All</span>
+          <span class="tab-count" id="countAll">0</span>
+        </button>
+        <button class="tab-btn" data-category="web">
+          <span>⚡ Web</span>
+          <span class="tab-count" id="countWeb">0</span>
+        </button>
+        <button class="tab-btn" data-category="api">
+          <span>🚀 APIs</span>
+          <span class="tab-count" id="countApi">0</span>
+        </button>
+        <button class="tab-btn" data-category="ai">
+          <span>🦙 AI / LLM</span>
+          <span class="tab-count" id="countAi">0</span>
+        </button>
+        <button class="tab-btn" data-category="fav" title="Show only your favorite and starred applications">
+          <span>⭐ Favorites</span>
+          <span class="tab-count" id="countFav">0</span>
+        </button>
+      </div>
+
+      <!-- View Modes & Options -->
+      <div class="view-controls">
+        <div class="view-switcher" id="viewSwitcher">
+          <button class="view-btn active" data-view="radar" title="Radar Galaxy Map View">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 2v20M2 12h20"/></svg>
+            <span>Radar Map</span>
+          </button>
+          <button class="view-btn" data-view="grid" title="Cards Grid View">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>Cards</span>
+          </button>
+          <button class="view-btn" data-view="table" title="Matrix Table Inspector View">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+            <span>Matrix Table</span>
+          </button>
+        </div>
+
+        <!-- Auto-refresh interval select -->
+        <div class="refresh-selector" title="Auto-refresh interval">
+          <span class="refresh-pulse-dot"></span>
+          <select id="refreshIntervalSelect">
+            <option value="3000">Poll 3s</option>
+            <option value="5000" selected>Poll 5s</option>
+            <option value="10000">Poll 10s</option>
+            <option value="0">Paused</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Content Container with 3 Views -->
+    <main class="main-viewport">
+      
+      <!-- 1. ORBITAL RADAR GALAXY VIEW -->
+      <section id="radarView" class="view-panel active">
+        <div class="radar-container">
+          <div class="radar-toolbar">
+            <div class="radar-legend">
+              <span class="legend-item"><span class="legend-color web-ring"></span> Ring 1: Web (3000-5999)</span>
+              <span class="legend-item"><span class="legend-color api-ring"></span> Ring 2: APIs (6000-8999)</span>
+              <span class="legend-item"><span class="legend-color ai-ring"></span> Ring 3: AI / DB (9000-15000)</span>
+              <span class="legend-item"><span class="legend-color sys-ring"></span> Ring 4: System / High (>15000)</span>
+            </div>
+            <div class="radar-actions">
+              <button id="radarResetBtn" class="radar-tool-btn" title="Center Radar View">🎯 Center</button>
+              <button id="radarAnimationToggle" class="radar-tool-btn active" title="Toggle Radar Sweep Animation">🌀 Sweep: ON</button>
+            </div>
+          </div>
+          
+          <div class="radar-canvas-wrap" id="radarCanvasWrap">
+            <canvas id="radarCanvas"></canvas>
+            
+            <!-- Hover Card Overlay for Radar Nodes -->
+            <div id="radarTooltip" class="radar-node-tooltip hidden">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. CARDS GRID VIEW -->
+      <section id="gridView" class="view-panel">
+        <div class="cards-grid" id="appsCardsContainer">
+          <!-- Dynamically populated -->
+        </div>
+        <div id="gridEmptyState" class="empty-state hidden">
+          <div class="empty-icon">🔍</div>
+          <h3>No matching applications found</h3>
+          <p>Try clearing filters or search term, or launch a dev server on localhost.</p>
+          <button class="btn btn-secondary" id="emptyResetFilterBtn">Reset Filters</button>
+        </div>
+      </section>
+
+      <!-- 3. MATRIX TABLE INSPECTOR VIEW -->
+      <section id="tableView" class="view-panel">
+        <div class="table-container">
+          <table class="matrix-table" id="matrixTable">
+            <thead>
+              <tr>
+                <th class="th-fav">★</th>
+                <th class="th-status sortable" data-sort="status">Status</th>
+                <th class="th-port sortable" data-sort="port">Port</th>
+                <th class="th-app sortable" data-sort="title">Application / Title</th>
+                <th class="th-framework sortable" data-sort="framework">Framework</th>
+                <th class="th-latency sortable" data-sort="latency">Latency</th>
+                <th class="th-pid sortable" data-sort="pid">PID</th>
+                <th class="th-cwd">Working Directory</th>
+                <th class="th-git">Git Branch</th>
+                <th class="th-category sortable" data-sort="category">Category</th>
+                <th class="th-actions">Quick Actions</th>
+              </tr>
+            </thead>
+            <tbody id="matrixTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom Status Bar -->
+    <footer class="app-footer">
+      <div class="footer-left">
+        <span class="hub-pill">📍 AppMap Hub on Port <strong>10000</strong></span>
+        <span class="last-scanned" id="lastScannedText">Last scanned: Just now</span>
+      </div>
+      <div class="footer-center">
+        <span class="vibe-quote">✨ "Vibe coding without lost ports"</span>
+      </div>
+      <div class="footer-right">
+        <span class="tip-text">💡 Tip: Click any port badge to copy URL • Click folder to open in Finder</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODALS -->
+  <!-- ============================================== -->
+
+  <!-- App Details & Customizer Modal -->
+  <dialog id="editModal" class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-port-badge" id="modalPortBadge">:3000</span>
+          <h2 id="modalAppTitle">Edit App Metadata</h2>
+        </div>
+        <button class="btn-close-modal" id="closeEditModalBtn" title="Close">&times;</button>
+      </div>
+
+      <form id="editAppForm" class="modal-body">
+        <input type="hidden" id="editPortInput">
+        <input type="hidden" id="editFingerprintInput">
+
+        <!-- App Icon & Visual Identity Picker -->
+        <div class="form-group icon-picker-section">
+          <label>App Icon & Visual Identity</label>
+          <div class="icon-picker-row">
+            <div class="icon-preview-box" id="modalIconPreview" title="Current Icon Preview">
+              <span id="modalIconPreviewGlyph">🌐</span>
+            </div>
+            <div class="icon-inputs-wrap">
+              <div class="emoji-palette" id="emojiPalette">
+                <button type="button" class="btn-emoji-pick" data-emoji="⚡" title="Vite / Fast">⚡</button>
+                <button type="button" class="btn-emoji-pick" data-emoji="⚛️" title="React">⚛️</button>
+                <button type="button" class="btn-emoji-pick" data-emoji="▲" title="Next.js">▲</button>
+                <button type="button" class="btn-emoji-pick" data-emoji="🧠" title="Neural / AI">🧠</button>
+                <button type="button" class="btn-emoji-pick" data-emoji="🐍" title="Python / FastAPI">🐍</button>
+                <button type="button" class="btn-emoji-pick" data-emoji="🦙" title="Ollama / Llama">🦙</button>
+                <button type="button" class="btn-emoji-pick" data-emoji="🚀" title="Rocket / Launch">🚀</button>
+                <button type="button" class="btn-emoji-pick" data-emoji="🌐" title="Web App">🌐</button>
+                <button type="button" class="btn-emoji-pick" data-emoji="📊" title="Dashboard">📊</button>
+                <button type="button" class="btn-emoji-pick" data-emoji="🎮" title="Gaming / 3D">🎮</button>
+                <button type="button" class="btn-emoji-pick" data-emoji="🛸" title="Radar / Space">🛸</button>
+                <button type="button" class="btn-emoji-pick" data-emoji="🐳" title="Docker / Container">🐳</button>
+                <button type="button" class="btn-emoji-pick" data-emoji="🔒" title="Auth / Security">🔒</button>
+                <button type="button" class="btn-emoji-pick" data-emoji="💼" title="Business / Service">💼</button>
+                <button type="button" class="btn-emoji-pick" data-emoji="✨" title="Sparkle">✨</button>
+              </div>
+              <div class="custom-icon-row">
+                <input type="text" id="editCustomIconInput" placeholder="Custom emoji (e.g. 🛠️) or image/SVG URL" class="form-control">
+                <button type="button" id="btnClearCustomIcon" class="btn btn-secondary btn-sm" title="Reset to auto-discovered web icon">Auto Icon</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-2">
+            <label for="editTitleInput">Display Name / Nickname</label>
+            <input type="text" id="editTitleInput" placeholder="e.g. NeuroLab Vibe Project" class="form-control">
+          </div>
+          <div class="form-group flex-1">
+            <label for="editCategorySelect">Category</label>
+            <select id="editCategorySelect" class="form-control">
+              <option value="web">⚡ Web App</option>
+              <option value="api">🚀 API / Backend</option>
+              <option value="ai">🦙 AI & Local LLM</option>
+              <option value="db">💾 Database / Cache</option>
+              <option value="system">🖥️ System Service</option>
+              <option value="tools">🛠️ Tool / Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="editTagsInput">Tags (comma-separated)</label>
+            <input type="text" id="editTagsInput" placeholder="e.g. client, prototype, v2" class="form-control">
+          </div>
+          <div class="form-group flex-1">
+            <label for="editUrlInput">Custom URL / Path</label>
+            <input type="text" id="editUrlInput" placeholder="http://localhost:3000/dashboard" class="form-control">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="editNotesInput">Notes & Developer Secrets / Credentials</label>
+          <textarea id="editNotesInput" rows="2" placeholder="e.g. Auth: test / test1234, API key: sk-..., dev notes" class="form-control"></textarea>
+        </div>
+
+        <!-- Technical Deep-Dive Inspector Panel -->
+        <details class="tech-details-accordion">
+          <summary>🔍 System & Process Inspector</summary>
+          <div class="tech-details-content">
+            <div class="tech-grid">
+              <div class="tech-item"><span class="tech-k">PID:</span> <span class="tech-v" id="techPid">-</span></div>
+              <div class="tech-item"><span class="tech-k">Process:</span> <span class="tech-v" id="techProc">-</span></div>
+              <div class="tech-item"><span class="tech-k">Framework:</span> <span class="tech-v" id="techFramework">-</span></div>
+              <div class="tech-item"><span class="tech-k">Latency:</span> <span class="tech-v" id="techLatency">-</span></div>
+              <div class="tech-item"><span class="tech-k">HTTP Status:</span> <span class="tech-v" id="techStatus">-</span></div>
+              <div class="tech-item"><span class="tech-k">Git Branch:</span> <span class="tech-v" id="techGit">-</span></div>
+            </div>
+            <div class="tech-item full-width"><span class="tech-k">Working Dir:</span> <span class="tech-v code-font" id="techCwd">-</span></div>
+            <div class="tech-item full-width"><span class="tech-k">Command Line:</span> <span class="tech-v code-font" id="techCmd">-</span></div>
+          </div>
+        </details>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger-outline" id="btnDeleteCustomMeta">Reset to Auto</button>
+          <div class="modal-footer-right">
+            <button type="button" class="btn btn-secondary" id="btnCancelEditModal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Metadata</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- Add Manual Custom Port Modal -->
+  <dialog id="manualModal" class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2>Add Custom Service / Port</h2>
+        </div>
+        <button class="btn-close-modal" id="closeManualModalBtn" title="Close">&times;</button>
+      </div>
+
+      <form id="manualAppForm" class="modal-body">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="manualPortInput">Port *</label>
+            <input type="number" id="manualPortInput" placeholder="e.g. 8000" class="form-control" required>
+          </div>
+          <div class="form-group flex-2">
+            <label for="manualNameInput">Service Name *</label>
+            <input type="text" id="manualNameInput" placeholder="e.g. Docker API, Ngrok Tunnel" class="form-control" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-2">
+            <label for="manualUrlInput">Full Target URL</label>
+            <input type="text" id="manualUrlInput" placeholder="http://localhost:8000 or tunnel URL" class="form-control">
+          </div>
+          <div class="form-group flex-1">
+            <label for="manualCategorySelect">Category</label>
+            <select id="manualCategorySelect" class="form-control">
+              <option value="web">⚡ Web App</option>
+              <option value="api">🚀 API / Backend</option>
+              <option value="ai">🦙 AI & LLM</option>
+              <option value="db">💾 Database</option>
+              <option value="tools">🛠️ Tool</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="manualNotesInput">Notes / Description</label>
+          <textarea id="manualNotesInput" rows="2" placeholder="Describe the purpose or container origin..." class="form-control"></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btnCancelManualModal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Register Service</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- Kill Process Confirmation Modal -->
+  <dialog id="killModal" class="modal-dialog">
+    <div class="modal-content modal-danger">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="danger-badge">⚠️ Terminate Process</span>
+          <h2 id="killModalTitle">Kill Process?</h2>
+        </div>
+        <button class="btn-close-modal" id="closeKillModalBtn" title="Close">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="kill-warning-text">Are you sure you want to terminate this local server?</p>
+        
+        <div class="kill-process-card">
+          <div class="kill-info-row"><span class="k">Port:</span> <span class="v" id="killPortText">:0</span></div>
+          <div class="kill-info-row"><span class="k">Process:</span> <span class="v" id="killProcessNameText">-</span></div>
+          <div class="kill-info-row"><span class="k">PID:</span> <span class="v" id="killPidText">-</span></div>
+          <div class="kill-info-row"><span class="k">Directory:</span> <span class="v code-font" id="killCwdText">-</span></div>
+        </div>
+
+        <div class="kill-options">
+          <label class="radio-label">
+            <input type="radio" name="killSignal" value="SIGTERM" checked>
+            <span>Graceful Shutdown (SIGTERM - standard exit)</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="killSignal" value="SIGKILL">
+            <span>Force Kill (SIGKILL - immediate -9)</span>
+          </label>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btnCancelKill">Cancel</button>
+          <button type="button" class="btn btn-danger" id="btnConfirmKill">Yes, Terminate Process</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="/js/radar.js"></script>
+  <script src="/js/cards.js"></script>
+  <script src="/js/table.js"></script>
+  <script src="/js/modal.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
