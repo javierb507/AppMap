@@ -34,9 +34,24 @@ const { execFileSync } = require('child_process');
 function getVersionInfo() {
   let commitHash = 'unknown';
   let commitDate = '';
+  const defaultPaths = ['/usr/local/bin', '/usr/bin', '/bin', '/usr/sbin', '/sbin', '/opt/homebrew/bin'];
+  const currentPath = process.env.PATH || '';
+  const mergedPath = currentPath ? `${currentPath}:${defaultPaths.join(':')}` : defaultPaths.join(':');
+  const execEnv = { ...process.env, PATH: mergedPath };
+
   try {
-    commitHash = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 1500 }).trim();
-    commitDate = execFileSync('git', ['log', '-1', '--format=%cd', '--date=format:%Y-%m-%d'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 1500 }).trim();
+    commitHash = execFileSync('git', ['rev-parse', '--short', 'HEAD'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+      timeout: 1500,
+      env: execEnv
+    }).trim();
+    commitDate = execFileSync('git', ['log', '-1', '--format=%cd', '--date=format:%Y-%m-%d'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+      timeout: 1500,
+      env: execEnv
+    }).trim();
   } catch (_) {
     commitDate = new Date().toISOString().split('T')[0];
   }
