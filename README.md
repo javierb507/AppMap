@@ -139,6 +139,14 @@ Use another port with `PORT=12000 npm start` (macOS/Linux) or `$env:PORT=12000; 
 
 ---
 
+## Private app review
+
+To let an approved person review one local app without deploying it, use the
+[optional qURL terminal workflow](docs/private-review.md). Share the selected
+app, not AppMap's process-control dashboard.
+
+---
+
 ## 💻 Platform Support
 
 All OS-specific logic lives in [`lib/platform.js`](lib/platform.js). Each step degrades gracefully if a tool is missing.
